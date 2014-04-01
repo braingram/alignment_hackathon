@@ -3,7 +3,7 @@
 queries can take the form of:
 
     v -> version
-    b[l,bbox]level{scale}
+    b[level,bbox]
 """
 
 import json
