@@ -56,30 +56,50 @@ class MongoTileStore(TileStore):
     def __init__(self, host='localhost', port=None, db='db', coll='test'):
         TileStore.__init__(self)
         self.coll = pymongo.Connection(host, port)[db][coll]
+        print("{} tiles in tilestore".format(self.coll.count()))
 
     def tile_query(self, q):
         mq = {}  # build a mongo query
         if 'level' in q:
             mq['level'] = q['level']
-        mq['scale'] = q.get('scale', 0)
-        assert mq['scale'] >= 0
+        scale = q.get('scale', 0)
+        assert scale >= 0
         # todo scale bounding box for scale
         assert len(q['bbox']) == 6
-        if mq['scale'] == 0:
+        if scale == 0:
             # left, right, north, south, top, bottom
             l, r, n, s, t, b = q['bbox']
         else:
-            scale = 2 ** mq['scale']
+            scale = 2 ** scale
             l, r, n, s, t, b = [i * scale for i in q['bbox']]
-        mq['$or'] = [
-            {'bbox.left': {'$lte': l}, 'bbox.right': {'$gte': l}},
-            {'bbox.left': {'$lte': r}, 'bbox.right': {'$gte': r}},
-            {'bbox.north': {'$lte': n}, 'bbox.south': {'$gte': n}},
-            {'bbox.north': {'$lte': s}, 'bbox.south': {'$gte': s}},
-            {'bbox.top': {'$lte': t}, 'bbox.top': {'$gte': t}},
-            {'bbox.bottom': {'$lte': b}, 'bbox.bottom': {'$gte': b}},
-        ]
-        return [image for image in self.coll.find(mq)]
+        mq['bbox.left'] = {'$lte': r}
+        mq['bbox.right'] = {'$gte': l}
+        mq['bbox.north'] = {'$lte': s}
+        mq['bbox.south'] = {'$gte': n}
+        mq['bbox.top'] = {'$lte': b}
+        mq['bbox.bottom'] = {'$gte': t}
+        #mq['$or'] = [
+        #    # inside conditions
+        #    {'$and': [
+        #        {'bbox.left': {'$lte': l}, 'bbox.right': {'$gte': l}},
+        #        {'bbox.left': {'$lte': r}, 'bbox.right': {'$gte': r}},
+        #        {'bbox.north': {'$lte': n}, 'bbox.south': {'$gte': n}},
+        #        {'bbox.north': {'$lte': s}, 'bbox.south': {'$gte': s}},
+        #        {'bbox.top': {'$lte': t}, 'bbox.bottom': {'$gte': t}},
+        #        {'bbox.top': {'$lte': b}, 'bbox.bottom': {'$gte': b}},
+        #    ]},
+        #    # outside conditions
+        #    {'$and': [
+        #        {'bbox.left': {'$gte': l}, 'bbox.right': {'$lte': r}},
+        #        {'bbox.north': {'$gte': n}, 'bbox.south': {'$lte': s}},
+        #        {'bbox.top': {'$lte': t}, 'bbox.bottom': {'$gte': b}},
+        #    ]},
+        #]
+        print("queriying db with {}".format(mq))
+        tiles = [tile for tile in self.coll.find(mq)]
+        for t in tiles:
+            del t['_id']
+        return tiles
 
 
 def fill_database(c, n=1000, drop=False):

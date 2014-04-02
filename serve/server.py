@@ -19,20 +19,27 @@ except:
 
 
 app = flask.Flask('tile server')
-tilestore = tilestore.MongoTileStore()
+tilestore = tilestore.MongoTileStore(db='140307_rep_grid', coll='tiles')
 
 
 @app.route('/<int:z>/<int:x>/<int:y>')
 def get_tile(x, y, z):
     print("x:{}, y:{}, z:{}".format(x, y, z))
     print(flask.request.args)  # TODO log these with logging
-    q = copy.deepcopy(flask.request.args)
-    q['x'] = x
-    q['y'] = y
-    q['z'] = z
-    imgs = tilestore.query(q)
+    q = dict(x=x, y=y, z=z)
+    for k in flask.request.args:
+        q[k] = flask.request.args[k]
+    h = float(q.get('h', 100000))
+    w = float(q.get('w', 100000))
+    d = float(q.get('d', 100000))
     # convert tile query into tile spec
-    return flask.jsonify(imgs)
+    q['bbox'] = [
+        x - w / 2., x + w / 2.,
+        y - h / 2., y + h / 2.,
+        z - d / 2., z + d / 2.]
+    print(q)
+    tiles = tilestore.query(dict(tile=q))
+    return flask.jsonify(dict(tiles=tiles))
 
 
 @app.route('/')
@@ -45,4 +52,4 @@ def run(*args, **kwargs):
 
 
 if __name__ == '__main__':
-    run()
+    run(debug=True)

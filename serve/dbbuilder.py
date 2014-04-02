@@ -19,10 +19,14 @@ def build_tile_spec(fn, regex):
     s['x'] = int(s['x'])
     s['y'] = int(s['y'])
     s['url'] = {"0": fn}
-    s['bbox'] = [
-        s['x'] - 4150, s['x'] + 4150,
-        s['y'] - 4150, s['y'] + 4150,
-        1000, 0]
+    s['bbox'] = {
+        'left': s['x'] - 4150,
+        'right': s['x'] + 4150,
+        'north': s['y'] - 4150,
+        'south': s['y'] + 4150,
+        'top': 1000,
+        'bottom': 0,
+    }
     s['filters'] = []  # TODO build lens correction filter, etc
     s['transforms'] = []  # TODO build linear transform
     s['level'] = 'raw'
