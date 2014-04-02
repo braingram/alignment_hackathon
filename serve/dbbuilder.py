@@ -22,8 +22,8 @@ def build_tile_spec(fn, regex):
     s['bbox'] = {
         'left': s['x'] - 4150,
         'right': s['x'] + 4150,
-        'north': s['y'] - 4150,
-        'south': s['y'] + 4150,
+        'north': s['y'] + 4150,
+        'south': s['y'] - 4150,
         'top': 1000,
         'bottom': 0,
     }

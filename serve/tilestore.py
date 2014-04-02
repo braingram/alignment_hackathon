@@ -59,6 +59,7 @@ class MongoTileStore(TileStore):
         print("{} tiles in tilestore".format(self.coll.count()))
 
     def tile_query(self, q):
+        #return [self.coll.find_one({}), ]
         mq = {}  # build a mongo query
         if 'level' in q:
             mq['level'] = q['level']
@@ -74,29 +75,13 @@ class MongoTileStore(TileStore):
             l, r, n, s, t, b = [i * scale for i in q['bbox']]
         mq['bbox.left'] = {'$lte': r}
         mq['bbox.right'] = {'$gte': l}
-        mq['bbox.north'] = {'$lte': s}
-        mq['bbox.south'] = {'$gte': n}
-        mq['bbox.top'] = {'$lte': b}
-        mq['bbox.bottom'] = {'$gte': t}
-        #mq['$or'] = [
-        #    # inside conditions
-        #    {'$and': [
-        #        {'bbox.left': {'$lte': l}, 'bbox.right': {'$gte': l}},
-        #        {'bbox.left': {'$lte': r}, 'bbox.right': {'$gte': r}},
-        #        {'bbox.north': {'$lte': n}, 'bbox.south': {'$gte': n}},
-        #        {'bbox.north': {'$lte': s}, 'bbox.south': {'$gte': s}},
-        #        {'bbox.top': {'$lte': t}, 'bbox.bottom': {'$gte': t}},
-        #        {'bbox.top': {'$lte': b}, 'bbox.bottom': {'$gte': b}},
-        #    ]},
-        #    # outside conditions
-        #    {'$and': [
-        #        {'bbox.left': {'$gte': l}, 'bbox.right': {'$lte': r}},
-        #        {'bbox.north': {'$gte': n}, 'bbox.south': {'$lte': s}},
-        #        {'bbox.top': {'$lte': t}, 'bbox.bottom': {'$gte': b}},
-        #    ]},
-        #]
-        print("queriying db with {}".format(mq))
+        mq['bbox.north'] = {'$gte': s}
+        mq['bbox.south'] = {'$lte': n}
+        mq['bbox.top'] = {'$gte': b}
+        mq['bbox.bottom'] = {'$lte': t}
+        print("querying db with {}".format(mq))
         tiles = [tile for tile in self.coll.find(mq)]
+        print("found {} tiles".format(len(tiles)))
         for t in tiles:
             del t['_id']
         return tiles
