@@ -32,39 +32,54 @@ import time
 
 import pymongo
 
-from . import protocol
+
+class TileStore(object):
+    def __init__(self):
+        self.version = '0.0.0'
+
+    def query(self, q):
+        if 'version' in q:
+            return self.version
+        if 'tile' in q:
+            return self.tile_query(q['tile'])
+        raise Exception("Unknown query {}".format(q))
+
+    def tile_query(self, q):
+        # bbox x y z
+        # scale
+        # section [id?] [ this is in z
+        # level
+        raise NotImplementedError("tile_query not implemented in DataStore")
 
 
-class MongoParser(protocol.QueryParser):
+class MongoTileStore(TileStore):
     def __init__(self, host='localhost', port=None, db='db', coll='test'):
-        protocol.QueryParser.__init__(self)
+        TileStore.__init__(self)
         self.coll = pymongo.Connection(host, port)[db][coll]
 
-    def find_images(self, bbox):
-        # turn this into a mongo query
-        q = {'level': bbox['level'], '$or': []}
-        # for any point in the bounding box [ulx uly lrx lry]
-        # test if in bbox
-        q['$or'].append({'$and': [
-            {'bbox.left': {'$lte': bbox['bbox'][0]}},
-            {'bbox.right': {'$gte': bbox['bbox'][0]}},
-            ]})
-        q['$or'].append({'$and': [
-            {'bbox.left': {'$lte': bbox['bbox'][2]}},
-            {'bbox.right': {'$gte': bbox['bbox'][2]}},
-            ]})
-        q['$or'].append({'$and': [
-            {'bbox.top': {'$lte': bbox['bbox'][1]}},
-            {'bbox.bototom': {'$gte': bbox['bbox'][1]}},
-            ]})
-        q['$or'].append({'$and': [
-            {'bbox.top': {'$lte': bbox['bbox'][3]}},
-            {'bbox.bototom': {'$gte': bbox['bbox'][3]}},
-            ]})
-        images = [image for image in self.coll.find(q)]
-        for image in images:
-            del image['_id']
-        return images
+    def tile_query(self, q):
+        mq = {}  # build a mongo query
+        if 'level' in q:
+            mq['level'] = q['level']
+        mq['scale'] = q.get('scale', 0)
+        assert mq['scale'] >= 0
+        # todo scale bounding box for scale
+        assert len(q['bbox']) == 6
+        if mq['scale'] == 0:
+            # left, right, north, south, top, bottom
+            l, r, n, s, t, b = q['bbox']
+        else:
+            scale = 2 ** mq['scale']
+            l, r, n, s, t, b = [i * scale for i in q['bbox']]
+        mq['$or'] = [
+            {'bbox.left': {'$lte': l}, 'bbox.right': {'$gte': l}},
+            {'bbox.left': {'$lte': r}, 'bbox.right': {'$gte': r}},
+            {'bbox.north': {'$lte': n}, 'bbox.south': {'$gte': n}},
+            {'bbox.north': {'$lte': s}, 'bbox.south': {'$gte': s}},
+            {'bbox.top': {'$lte': t}, 'bbox.top': {'$gte': t}},
+            {'bbox.bottom': {'$lte': b}, 'bbox.bottom': {'$gte': b}},
+        ]
+        return [image for image in self.coll.find(mq)]
 
 
 def fill_database(c, n=1000, drop=False):
@@ -90,7 +105,7 @@ def fill_database(c, n=1000, drop=False):
 def time_queries(ns=None):
     if ns is None:
         ns = [100, 900, 9000, 900000, 9000000]
-    q = MongoParser()
+    q = MongoTileStore()
     q.coll.drop()
     rs = []
     for n in ns:
