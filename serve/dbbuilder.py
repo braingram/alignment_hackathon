@@ -10,29 +10,41 @@ import re
 
 import pymongo
 
-ddir = '~/Desktop/montages/140307_1120_zxy_rep_grid_small/*.tif'
-dregex = 'c0_(?P<x>[0-9]*)_(?P<y>[0-9]*)_'
+#cname = '140307_rep_grid'
+#dregex = 'c0_(?P<x>[0-9]*)_(?P<y>[0-9]*)_'
+#hfov = 4150
+ddir = 'tests/tiles/*.tif'
+cname = 'test'
+dregex = '(?P<x>[0-9]*)_(?P<y>[0-9]*)'
+hfov = 0.5
 
 
 def build_tile_spec(fn, regex):
     s = re.search(regex, fn).groupdict()
-    s['x'] = int(s['x'])
-    s['y'] = int(s['y'])
+    x = float(s['x'])
+    y = float(s['y'])
     s['url'] = {"0": fn}
     s['bbox'] = {
-        'left': s['x'] - 4150,
-        'right': s['x'] + 4150,
-        'north': s['y'] + 4150,
-        'south': s['y'] - 4150,
+        'left': x - hfov,
+        'right': x + hfov,
+        'north': y + hfov,
+        'south': y - hfov,
         'top': 1000,
         'bottom': 0,
     }
     s['filters'] = []  # TODO build lens correction filter, etc
-    s['transforms'] = []  # TODO build linear transform
+    #s['x'] = int(s['x'])
+    #s['y'] = int(s['y'])
+    s['transforms'] = [
+        {
+            'name': 'affine',
+            'params': [1., 0., 0., 1., s['bbox']['left'], s['bbox']['north']],
+        },
+    ]
     s['level'] = 'raw'
     s['parent'] = 0
     s['minIntensity'] = 0
-    s['maxIntensity'] = 65535
+    s['maxIntensity'] = 255
     return s
 
 
@@ -45,7 +57,7 @@ def build_database(coll, glob_string, regex):
 
 
 if __name__ == '__main__':
-    coll = pymongo.Connection('localhost')['140307_rep_grid']['tiles']
+    coll = pymongo.Connection('localhost')[cname]['tiles']
     coll.drop()
     build_database(coll, ddir, dregex)
     map(coll.create_index, (

@@ -63,11 +63,11 @@ class MongoTileStore(TileStore):
         mq = {}  # build a mongo query
         if 'level' in q:
             mq['level'] = q['level']
-        scale = q.get('scale', 0)
+        scale = q.get('z', 0)
         assert scale >= 0
         # todo scale bounding box for scale
         assert len(q['bbox']) == 6
-        if scale == 0:
+        if True or scale == 0:  # TODO remove this scaling?
             # left, right, north, south, top, bottom
             l, r, n, s, t, b = q['bbox']
         else:

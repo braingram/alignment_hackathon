@@ -15,7 +15,8 @@
         var po = org.polymaps;
         var map = po.map()
             .container(document.getElementById("map").appendChild(po.svg("svg")))
-            .zoom(0)
+            .zoomRange([1, 8])
+            .zoom(1)
             .add(po.interact());
         //
         map.add(po.image().url("http://localhost:5000/{Z}/{X}/{Y}"));
