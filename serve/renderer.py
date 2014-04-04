@@ -38,15 +38,15 @@ def open_bmp(fn):
         bits = struct.unpack('H', h[14:16])[0]
         direction = -1
         if h[11] == '\xff':
-            print "upside down"
+            #print "upside down"
             height = (2 ** 32) - height
             #direction = -1  TODO should this be flipped?
     fp.close()
-    print data_offset
-    print height
-    print width
-    print direction
-    print bits
+    #print data_offset
+    #print height
+    #print width
+    #print direction
+    #print bits
     return numpy.memmap(
         fn, dtype='u{}'.format(bits / 8),
         offset=data_offset, shape=(height, width))[::direction, :]
@@ -55,7 +55,7 @@ def open_bmp(fn):
 def open_tif(fn):
     if fn in imgs:
         return imgs[fn]
-    print("Opening file {}".format(fn))
+    #print("Opening file {}".format(fn))
     f = libtiff.TIFFfile(fn)
     im = f.get_tiff_array()[0]
     f.close()
@@ -130,7 +130,7 @@ def render_image(q, image, dims, dst=None):
     #print("im_to_w {}".format(im_to_w))
     # combine affines im_to_w -> im_to_q_w -> q_to_t
     im_to_t = combine_affines(w_to_t, im_to_w)
-    print("im_to_t {}".format(im_to_t))
+    #print("im_to_t {}".format(im_to_t))
     # pre-scale image?  TODO
     # convert image
     # calculate original image bbox to world coordinates
@@ -141,55 +141,6 @@ def render_image(q, image, dims, dst=None):
         return cv2.warpAffine(im, im_to_t, dims)
     return cv2.warpAffine(
         im, im_to_t, dims, dst=dst, borderMode=cv2.BORDER_TRANSPARENT)
-
-
-def render_image2(q, image, dims, dst=None):
-    #r = cv2.warpAffine(
-    #    im, numpy.array(args.transform).astype('f8'),
-    #    (args.width, args.height))
-    # calculate how much to downsample this
-    # TODO don't assume square bounding box?
-    world_units_per_pixel = (q['bbox'][1] - q['bbox'][0]) / float(dims[0])
-    print("world_units_per_pixel {}".format(world_units_per_pixel))
-    # TODO handle multi-scale data
-    urls = image['url']
-    im = open_tif(urls['0'])
-    im_units_per_pixel = (
-        image['bbox']['right'] - image['bbox']['left']) / float(im.shape[1])
-    print("im_units_per_pixel {}".format(im_units_per_pixel))
-    scale_ratio = world_units_per_pixel / im_units_per_pixel
-    closest_2 = int(numpy.log2(scale_ratio))
-    imds = 2 ** closest_2
-    im = im[::imds, ::imds]
-    remaining_scale = scale_ratio / float(imds)
-    #remaining_scale = scale_ratio / float(imds)
-    print("im shape {}".format(im.shape))
-    print("scale_ratio {}".format(scale_ratio))
-    print("closest_2 {}".format(closest_2))
-    print("imds {}".format(imds))
-    print("remaining_scale {}".format(remaining_scale))
-    # find closest power of 2 rescale
-    t = numpy.array(
-        image['transforms'][0]['params']).astype('f8')
-    # reorder this
-    t = numpy.array([[t[0], t[1], t[4]], [t[2], t[3], t[5]]])
-    s = numpy.array([
-        [1. / remaining_scale, 1., 1. / world_units_per_pixel],
-        [1., 1. / remaining_scale, -1. / world_units_per_pixel]])
-    o = numpy.array(
-        [[0., 0., q['bbox'][0]],
-         [0., 0., q['bbox'][2]]])
-    T = ((t - o) * s).astype('f8')
-    print("Rendering image {}".format(image))
-    print("\tfrom query {}".format(q))
-    print("\twith transform {}".format(T))
-    print("\t\traw {}".format(t))
-    print("\t\toffset {}".format(o))
-    print("\t\tscaled {}".format(s))
-    print(T)
-    if dst is None:
-        return cv2.warpAffine(im.astype('f8'), T, dims)
-    return cv2.warpAffine(im.astype('f8'), T, dims, dst)
 
 
 def render_tile(q, images, dims):

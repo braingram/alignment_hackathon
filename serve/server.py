@@ -27,7 +27,8 @@ except:
 app = flask.Flask('tile server')
 #tilestore = tilestore.MongoTileStore(db='test', coll='tiles')
 #tilestore = tilestore.MongoTileStore(db='140307_rep_grid', coll='tiles')
-tilestore = tilestore.MongoTileStore(db='mbsem', coll='tiles')
+#tilestore = tilestore.MongoTileStore(db='mbsem', coll='tiles')
+tilestore = tilestore.JSONTileStore('mbsem.json')
 bounds = {}
 bounds['x0'] = tilestore.get_min('bbox.left')
 bounds['y0'] = tilestore.get_min('bbox.south')
@@ -51,7 +52,7 @@ def test_render_tile(q, s=None):
     if s is None:
         s = tilestore
     q['bbox'] = query_to_bounding_box(q)
-    print("query {}".format(q))
+    #print("query {}".format(q))
     tiles = s.query(dict(tile=q))
     # render images to a 256 x 256 tile
     return renderer.render_tile(q, tiles, (256, 256))[::-1, :]
@@ -87,7 +88,7 @@ def get_tile(x, y, z):
     #z -= 1  # now 0 - 7
     # x & y are [0, (2 **z - 1)]
     # 1 is most zoomed out make 8 most zoomed in
-    print("x:{}, y:{}, z:{}".format(x, y, z))
+    #print("x:{}, y:{}, z:{}".format(x, y, z))
     #print(flask.request.args)  # TODO log these with logging
     q = dict(x=x, y=y, z=z)
     for k in flask.request.args:
@@ -95,7 +96,7 @@ def get_tile(x, y, z):
 
     q['bbox'] = query_to_bounding_box(q)
 
-    print("get_tile {}".format(q))
+    #print("get_tile {}".format(q))
     tiles = tilestore.query(dict(tile=q))
     # render images to a 256 x 256 tile
     rendered_tile = renderer.render_tile(q, tiles, (256, 256))

@@ -59,19 +59,20 @@ class TileStore(object):
 
 def find(tiles, indexes, bbox):
     # nieve find TODO time this, speed it up
-    m = indexes['bbox.left'] <= bbox['right']
-    m = numpy.logical_and(m, indexes['bbox.right'] >= bbox['left'])
+    m = indexes['bbox.left'] <= bbox[1]
+    m = numpy.logical_and(m, indexes['bbox.right'] >= bbox[0])
     if not numpy.any(m):  # shortcut exit for no finds
         return []
-    m = numpy.logical_and(m, indexes['bbox.north'] >= bbox['south'])
-    m = numpy.logical_and(m, indexes['bbox.south'] <= bbox['north'])
+    m = numpy.logical_and(m, indexes['bbox.north'] >= bbox[3])
+    m = numpy.logical_and(m, indexes['bbox.south'] <= bbox[2])
     if not numpy.any(m):
         return []
-    m = numpy.logical_and(m, indexes['bbox.top'] >= bbox['bottom'])
-    m = numpy.logical_and(m, indexes['bbox.bottom'] <= bbox['top'])
+    m = numpy.logical_and(m, indexes['bbox.top'] >= bbox[5])
+    m = numpy.logical_and(m, indexes['bbox.bottom'] <= bbox[4])
     if not numpy.any(m):
         return []
-    return tiles[numpy.where(m)[0]]
+    #print numpy.where(m)
+    return [tiles[i] for i in numpy.where(m)[0]]
 
 
 class JSONTileStore(TileStore):
@@ -84,7 +85,9 @@ class JSONTileStore(TileStore):
         self.indexes = {}
         for k in ['bbox.left', 'bbox.right', 'bbox.north',
                   'bbox.south', 'bbox.top', 'bbox.bottom']:
-            self.indexes[k] = numpy.array([t[k] for t in self.tiles])
+            self.indexes[k] = numpy.array(
+                [reduce(lambda x, y: x[y], k.split('.'), t)
+                 for t in self.tiles])
 
     def tile_query(self, q):
         return find(self.tiles, self.indexes, q['bbox'])

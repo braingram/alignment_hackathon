@@ -77,15 +77,15 @@ def build_database(coll, glob_string, regex):
         coll.insert(d)
 
 
-def build_json(fn, glob_string, regex):
+def build_json(output_fn, glob_string, regex):
     fns = glob.glob(os.path.expanduser(glob_string))
     docs = [build_tile_spec(fn, regex) for fn in fns]
-    with open(fn, 'w') as f:
+    with open(output_fn, 'w') as f:
         json.dump(docs, f)
 
 
 if __name__ == '__main__':
-    if has_pymongo:
+    if has_pymongo and len(sys.argv) <= 1:
         coll = pymongo.Connection('localhost')[cname]['tiles']
         coll.drop()
         build_database(coll, ddir, dregex)

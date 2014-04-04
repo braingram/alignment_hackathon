@@ -52,7 +52,7 @@ def build_database(coll, glob_string, regex):
     fns = glob.glob(os.path.expanduser(glob_string))
     for fn in fns:
         d = build_tile_spec(fn, regex)
-        print("Tilespec built for fn: {} = {}".format(fn, d))
+        #print("Tilespec built for fn: {} = {}".format(fn, d))
         coll.insert(d)
 
 
