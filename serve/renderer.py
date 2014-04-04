@@ -2,6 +2,8 @@
 
 #from cStringIO import StringIO
 
+import struct
+
 import cv2
 import libtiff
 import numpy
@@ -9,6 +11,41 @@ import numpy
 
 
 imgs = {}
+
+
+def open_bmp(fn):
+    if fn in imgs:
+        return imgs[fn]
+    fp = open(fn, 'rb')
+    gh = fp.read(14)
+    assert gh[:2] == 'BM'
+    data_offset = struct.unpack('I', gh[10:])[0]
+    h = fp.read(4)
+    hs = struct.unpack('I', h)[0]
+    h += fp.read(hs - 4)  # read the rest of the header
+    if hs == 12:
+        height = struct.unpack('H', h[6:8])[0]
+        width = struct.unpack('H', h[4:6])[0]
+        bits = struct.unpack('H', h[10:12])[0]
+        direction = -1
+    elif hs in [40, 64, 108, 124]:
+        height = struct.unpack('I', h[8:12])[0]
+        width = struct.unpack('I', h[4:8])[0]
+        bits = struct.unpack('H', h[14:16])[0]
+        direction = -1
+        if h[11] == '\xff':
+            print "upside down"
+            height = (2 ** 32) - height
+            #direction = -1  TODO should this be flipped?
+    fp.close()
+    print data_offset
+    print height
+    print width
+    print direction
+    print bits
+    return numpy.memmap(
+        fn, dtype='u{}'.format(bits / 8),
+        offset=data_offset, shape=(height, width))[::direction, :]
 
 
 def open_tif(fn):
@@ -20,6 +57,12 @@ def open_tif(fn):
     f.close()
     imgs[fn] = im
     return im
+
+
+def open_image(fn):
+    if '.bmp' in fn.lower():
+        return open_bmp(fn)
+    return open_tif(fn)
 
 
 def bbox_to_xyz(bb):
@@ -67,7 +110,7 @@ def render_image(q, image, dims, dst=None):
     #print("w_to_t {}".format(w_to_t))
     # generate affine (2) to lay image (image) onto (world)
     #im = open_tif(image['url']['0'])[::4, ::4]
-    im = open_tif(image['url']['0'])
+    im = open_image(image['url']['0'])
     imshape = im.shape
     ipts = [[0, 0], [imshape[0], 0], [imshape[0], imshape[1]]]
     # generate affine (1) to lay image bounding box (world) onto query

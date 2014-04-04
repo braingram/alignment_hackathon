@@ -26,12 +26,17 @@ except:
 
 app = flask.Flask('tile server')
 #tilestore = tilestore.MongoTileStore(db='test', coll='tiles')
-tilestore = tilestore.MongoTileStore(db='140307_rep_grid', coll='tiles')
+#tilestore = tilestore.MongoTileStore(db='140307_rep_grid', coll='tiles')
+tilestore = tilestore.MongoTileStore(db='mbsem', coll='tiles')
 bounds = {}
 bounds['x0'] = tilestore.get_min('bbox.left')
 bounds['y0'] = tilestore.get_min('bbox.south')
-bounds['xs'] = tilestore.get_max('bbox.right') - bounds['x0']
-bounds['ys'] = tilestore.get_max('bbox.north') - bounds['y0']
+xs = tilestore.get_max('bbox.right') - bounds['x0']
+ys = tilestore.get_max('bbox.north') - bounds['y0']
+bounds['xs'] = max(xs, ys)
+bounds['ys'] = bounds['xs']
+#bounds['xs'] = tilestore.get_max('bbox.right') - bounds['x0']
+#bounds['ys'] = tilestore.get_max('bbox.north') - bounds['y0']
 
 
 def array_to_png(a):
