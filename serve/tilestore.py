@@ -31,6 +31,11 @@ import json
 
 import numpy
 
+try:
+    from . import profiler
+except:
+    import profiler
+
 
 class TileStore(object):
     def __init__(self):
@@ -57,6 +62,7 @@ class TileStore(object):
         raise NotImplementedError("get_min not implemented in DataStore")
 
 
+@profiler.timeit
 def find(tiles, indexes, bbox):
     # nieve find TODO time this, speed it up
     m = indexes['bbox.left'] <= bbox[1]

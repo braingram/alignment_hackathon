@@ -23,6 +23,10 @@ try:  # HACK
     from . import renderer
 except:
     import renderer
+try:
+    from . import profiler
+except:
+    import profiler
 
 
 app = flask.Flask('tile server')
@@ -42,6 +46,7 @@ bounds['ys'] = bounds['xs']
 #bounds['ys'] = tilestore.get_max('bbox.north') - bounds['y0']
 
 
+@profiler.timeit
 def array_to_png(a):
     im = Image.fromarray(a.astype('u1'))
     io = StringIO()
@@ -60,6 +65,7 @@ def test_render_tile(q, s=None):
     return renderer.render_tile(q, tiles, (256, 256))[::-1, :]
 
 
+@profiler.timeit
 def query_to_bounding_box(q):
     ## for rep grid
     #x0 = q.get('x0', 487547)  # min x (nm) of all tiles
@@ -84,6 +90,7 @@ def query_to_bounding_box(q):
         0, 0]
 
 
+@profiler.timeit
 @app.route('/<int:z>/<int:x>/<int:y>')
 def get_tile(x, y, z):
     # z is 1 - 8, 1 is zoomed out
@@ -121,6 +128,15 @@ def default():
         servers = []
     servers.append(flask.request.host)
     return flask.render_template('map.html', servers=servers)
+
+
+@app.route('/stats')
+def stats():
+    times = dict(
+        [(k, profiler.times[k] / profiler.ns[k]) for k in profiler.times])
+    return flask.render_template_string(
+        '<html><head></head><body>{{ times }}</body></html>',
+        times=times)
 
 
 def run(*args, **kwargs):

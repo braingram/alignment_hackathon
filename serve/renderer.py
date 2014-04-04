@@ -13,6 +13,11 @@ except ImportError:
 import numpy
 #import pylab
 
+try:
+    from . import profiler
+except:
+    import profiler
+
 
 imgs = {}
 
@@ -63,6 +68,7 @@ def open_tif(fn):
     return im
 
 
+@profiler.timeit
 def open_image(fn):
     if '.bmp' in fn.lower():
         return open_bmp(fn)
@@ -100,6 +106,7 @@ def combine_affines(*affines):
     return reduce(multiply_affines, affines)
 
 
+@profiler.timeit
 def render_image(q, image, dims, dst=None):
     # take query bounding box (world coordinates)
     qbb = q['bbox']
@@ -148,6 +155,7 @@ def render_image(q, image, dims, dst=None):
         im, im_to_t, dims, dst=dst, borderMode=cv2.BORDER_TRANSPARENT)
 
 
+@profiler.timeit
 def render_tile(q, images, dims):
     # assume a tif for now
     if not len(images):
