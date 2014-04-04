@@ -131,7 +131,12 @@ def render_image(q, image, dims, dst=None):
     # combine affines im_to_w -> im_to_q_w -> q_to_t
     im_to_t = combine_affines(w_to_t, im_to_w)
     #print("im_to_t {}".format(im_to_t))
-    # pre-scale image?  TODO
+    md = 1. / max(im_to_t[0, 0], im_to_t[1, 1])
+    if md > 1:
+        s = int(md)  # TODO max prescale?
+        im_to_t[0, 0] = im_to_t[0, 0] * s
+        im_to_t[1, 1] = im_to_t[1, 1] * s
+        im = im[::s, ::s]
     # convert image
     # calculate original image bbox to world coordinates
     # convert
