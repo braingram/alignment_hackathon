@@ -9,6 +9,7 @@
     </style>
 </head>
 <body>
+    {{ servers }}
     <div id="map">
     </div>
     <script type="text/javascript">
@@ -19,7 +20,7 @@
             .zoom(1)
             .add(po.interact());
         //
-        map.add(po.image().url("http://localhost:5000/{Z}/{X}/{Y}"));
+            map.add(po.image().url(po.url("http://{S}/{Z}/{X}/{Y}").hosts({{servers|tojson|safe}})));
     </script>
 </body>
 </html>

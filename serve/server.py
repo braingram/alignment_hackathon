@@ -9,6 +9,7 @@ Sample and return images
 """
 
 from cStringIO import StringIO
+import os
 
 import flask
 import Image
@@ -110,7 +111,16 @@ def get_tile(x, y, z):
 
 @app.route('/')
 def default():
-    return flask.render_template('map.html')
+    print flask.request.host
+    # get rendering servers
+    # TODO make this non-hacky
+    sdir = os.path.expanduser(os.path.join('~', 'graham', 'servers'))
+    if os.path.exists(sdir):
+        servers = os.listdir(sdir)
+    else:
+        servers = []
+    servers.append(flask.request.host)
+    return flask.render_template('map.html', servers=servers)
 
 
 def run(*args, **kwargs):
