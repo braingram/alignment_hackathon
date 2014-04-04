@@ -96,4 +96,6 @@ if __name__ == '__main__':
         print("Resulting database has {} tiles".format(coll.count()))
     else:
         assert len(sys.argv) > 1, "Filename must be supplied"
+        if len(sys.argv) > 2:
+            ddir = sys.argv[2]
         build_json(sys.argv[1], ddir, dregex)
