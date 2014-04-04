@@ -86,6 +86,16 @@ class MongoTileStore(TileStore):
             del t['_id']
         return tiles
 
+    def get_max(self, k):
+        cursor = self.coll.find({}, {k: True}).sort(k, -1).limit(1)
+        d = cursor.next()
+        return reduce(lambda x, y: x[y], k.split('.'), d)
+
+    def get_min(self, k):
+        cursor = self.coll.find({}, {k: True}).sort(k, 1).limit(1)
+        d = cursor.next()
+        return reduce(lambda x, y: x[y], k.split('.'), d)
+
 
 def fill_database(c, n=1000, drop=False):
     if drop:

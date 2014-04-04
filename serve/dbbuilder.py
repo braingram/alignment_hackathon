@@ -23,7 +23,7 @@ def build_tile_spec(fn, regex):
     s = re.search(regex, fn).groupdict()
     x = float(s['x'])
     y = float(s['y'])
-    s['url'] = {"0": fn}
+    s['url'] = {"0": os.path.abspath(fn)}
     s['bbox'] = {
         'left': x - hfov,
         'right': x + hfov,
@@ -38,7 +38,7 @@ def build_tile_spec(fn, regex):
     s['transforms'] = [
         {
             'name': 'affine',
-            'params': [1., 0., 0., 1., s['bbox']['left'], s['bbox']['north']],
+            'params': [1., 0., 0., 1., x, y],
         },
     ]
     s['level'] = 'raw'

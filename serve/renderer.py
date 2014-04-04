@@ -8,10 +8,17 @@ import numpy
 #import pylab
 
 
+imgs = {}
+
+
 def open_tif(fn):
+    if fn in imgs:
+        return imgs[fn]
+    print("Opening file {}".format(fn))
     f = libtiff.TIFFfile(fn)
     im = f.get_tiff_array()[0]
     f.close()
+    imgs[fn] = im
     return im
 
 
@@ -27,7 +34,67 @@ def distance(bb0, bb1):
         numpy.array(bbox_to_xyz(bb0)) - numpy.array(bbox_to_xyz(bb1))))
 
 
+def multiply_affines(a, b):
+    am = numpy.matrix(numpy.identity(3, dtype='f4'))
+    am[:2] = a
+    bm = numpy.matrix(numpy.identity(3, dtype='f4'))
+    bm[:2] = b
+    r = am * bm  # a * b
+    # TODO do I need to normalize this?
+    #print("a {}".format(am))
+    #print("b {}".format(bm))
+    #print("a * b = {}".format(r))
+    return numpy.array(r[:2], dtype='f4')
+
+
+def combine_affines(*affines):
+    return reduce(multiply_affines, affines)
+
+
 def render_image(q, image, dims, dst=None):
+    # take query bounding box (world coordinates)
+    qbb = q['bbox']
+    qbb_wpts = [[qbb[0], qbb[2]], [qbb[1], qbb[2]], [qbb[1], qbb[3]]]
+    #im_to_q_w = cv2.getAffineTransform(
+    #    numpy.array(ibb_wpts, dtype='f4'),
+    #    numpy.array(qbb_wpts, dtype='f4'))
+    #print("im_to_q_w {}".format(im_to_q_w))
+    # affine for world to tile
+    tpts = [[0, 0], [dims[0], 0], [dims[0], dims[1]]]
+    w_to_t = cv2.getAffineTransform(
+        numpy.array(qbb_wpts, dtype='f4'),
+        numpy.array(tpts, dtype='f4'))
+    #print("w_to_t {}".format(w_to_t))
+    # generate affine (2) to lay image (image) onto (world)
+    #im = open_tif(image['url']['0'])[::4, ::4]
+    im = open_tif(image['url']['0'])
+    imshape = im.shape
+    ipts = [[0, 0], [imshape[0], 0], [imshape[0], imshape[1]]]
+    # generate affine (1) to lay image bounding box (world) onto query
+    ibb = image['bbox']
+    ibb_wpts = [
+        [ibb['left'], ibb['north']], [ibb['right'], ibb['north']],
+        [ibb['right'], ibb['south']]]
+    im_to_w = cv2.getAffineTransform(
+        numpy.array(ipts, dtype='f4'),
+        numpy.array(ibb_wpts, dtype='f4'))
+    #print("im_to_w {}".format(im_to_w))
+    # combine affines im_to_w -> im_to_q_w -> q_to_t
+    im_to_t = combine_affines(w_to_t, im_to_w)
+    print("im_to_t {}".format(im_to_t))
+    # pre-scale image?  TODO
+    # convert image
+    # calculate original image bbox to world coordinates
+    # convert
+    #if dst is None:
+    #    return cv2.warpAffine(im.astype('f8'), im_to_t, dims)
+    if dst is None:
+        return cv2.warpAffine(im, im_to_t, dims)
+    return cv2.warpAffine(
+        im, im_to_t, dims, dst=dst, borderMode=cv2.BORDER_TRANSPARENT)
+
+
+def render_image2(q, image, dims, dst=None):
     #r = cv2.warpAffine(
     #    im, numpy.array(args.transform).astype('f8'),
     #    (args.width, args.height))
@@ -39,13 +106,14 @@ def render_image(q, image, dims, dst=None):
     urls = image['url']
     im = open_tif(urls['0'])
     im_units_per_pixel = (
-        image['bbox']['right'] - image['bbox']['left']) / float(im.shape[0])
+        image['bbox']['right'] - image['bbox']['left']) / float(im.shape[1])
     print("im_units_per_pixel {}".format(im_units_per_pixel))
     scale_ratio = world_units_per_pixel / im_units_per_pixel
     closest_2 = int(numpy.log2(scale_ratio))
     imds = 2 ** closest_2
-    im = im[::-imds, ::imds]
+    im = im[::imds, ::imds]
     remaining_scale = scale_ratio / float(imds)
+    #remaining_scale = scale_ratio / float(imds)
     print("im shape {}".format(im.shape))
     print("scale_ratio {}".format(scale_ratio))
     print("closest_2 {}".format(closest_2))
