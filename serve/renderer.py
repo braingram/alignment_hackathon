@@ -118,7 +118,7 @@ def render_image(q, image, dims, dst=None):
     #im = open_tif(image['url']['0'])[::4, ::4]
     im = open_image(image['url']['0'])
     imshape = im.shape
-    ipts = [[0, 0], [imshape[0], 0], [imshape[0], imshape[1]]]
+    ipts = [[0, 0], [imshape[1], 0], [imshape[1], imshape[0]]]
     # generate affine (1) to lay image bounding box (world) onto query
     ibb = image['bbox']
     ibb_wpts = [
@@ -127,10 +127,10 @@ def render_image(q, image, dims, dst=None):
     im_to_w = cv2.getAffineTransform(
         numpy.array(ipts, dtype='f4'),
         numpy.array(ibb_wpts, dtype='f4'))
-    #print("im_to_w {}".format(im_to_w))
+    print("im_to_w {}".format(im_to_w))
     # combine affines im_to_w -> im_to_q_w -> q_to_t
     im_to_t = combine_affines(w_to_t, im_to_w)
-    #print("im_to_t {}".format(im_to_t))
+    print("im_to_t {}".format(im_to_t))
     # pre-scale image?  TODO
     # convert image
     # calculate original image bbox to world coordinates

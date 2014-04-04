@@ -31,7 +31,7 @@ import pymongo
 
 try:
     from . import tilestore
-except ImportError:
+except:
     import tilestore
 
 

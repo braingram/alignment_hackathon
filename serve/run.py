@@ -5,8 +5,8 @@ import sys
 import server
 
 if __name__ == '__main__':
-    host = 'localhost'
-    port = 5555
+    host = '127.0.0.1'
+    port = 5000
     debug = False
     if len(sys.argv) > 1:
         host = sys.argv[1]
