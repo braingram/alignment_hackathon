@@ -5,11 +5,17 @@ and a regex
 """
 
 import glob
-import numpy
+import json
 import os
 import re
+import sys
 
-import pymongo
+import numpy
+try:
+    import pymongo
+    has_pymongo = True
+except ImportError:
+    has_pymongo = False
 
 #cname = '140307_rep_grid'
 #dregex = 'c0_(?P<x>[0-9]*)_(?P<y>[0-9]*)_'
@@ -71,12 +77,23 @@ def build_database(coll, glob_string, regex):
         coll.insert(d)
 
 
+def build_json(fn, glob_string, regex):
+    fns = glob.glob(os.path.expanduser(glob_string))
+    docs = [build_tile_spec(fn, regex) for fn in fns]
+    with open(fn, 'w') as f:
+        json.dump(docs, f)
+
+
 if __name__ == '__main__':
-    coll = pymongo.Connection('localhost')[cname]['tiles']
-    coll.drop()
-    build_database(coll, ddir, dregex)
-    map(coll.create_index, (
-        'bbox.left', 'bbox.right',
-        'bbox.north', 'bbox.south',
-        'bbox.top', 'bbox.bottom'))
-    print("Resulting database has {} tiles".format(coll.count()))
+    if has_pymongo:
+        coll = pymongo.Connection('localhost')[cname]['tiles']
+        coll.drop()
+        build_database(coll, ddir, dregex)
+        map(coll.create_index, (
+            'bbox.left', 'bbox.right',
+            'bbox.north', 'bbox.south',
+            'bbox.top', 'bbox.bottom'))
+        print("Resulting database has {} tiles".format(coll.count()))
+    else:
+        assert len(sys.argv) > 1, "Filename must be supplied"
+        build_json(sys.argv[1], ddir, dregex)

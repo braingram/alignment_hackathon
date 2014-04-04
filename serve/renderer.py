@@ -5,7 +5,11 @@
 import struct
 
 import cv2
-import libtiff
+try:
+    import libtiff
+    has_libtiff = True
+except ImportError:
+    has_libtiff = False
 import numpy
 #import pylab
 
@@ -62,6 +66,8 @@ def open_tif(fn):
 def open_image(fn):
     if '.bmp' in fn.lower():
         return open_bmp(fn)
+    if not has_libtiff:
+        raise Exception("No libtiff found, only bmp supported")
     return open_tif(fn)
 
 

@@ -27,10 +27,9 @@ docs:
     'parent': <id of parent transform>
 """
 
-import random
-import time
+import json
 
-import pymongo
+import numpy
 
 
 class TileStore(object):
@@ -47,86 +46,51 @@ class TileStore(object):
     def tile_query(self, q):
         # bbox x y z
         # scale
-        # section [id?] [ this is in z
+        # section [id?]
         # level
         raise NotImplementedError("tile_query not implemented in DataStore")
 
-
-class MongoTileStore(TileStore):
-    def __init__(self, host='localhost', port=None, db='db', coll='test'):
-        TileStore.__init__(self)
-        self.coll = pymongo.Connection(host, port)[db][coll]
-        print("{} tiles in tilestore".format(self.coll.count()))
-
-    def tile_query(self, q):
-        #return [self.coll.find_one({}), ]
-        mq = {}  # build a mongo query
-        if 'level' in q:
-            mq['level'] = q['level']
-        scale = q.get('z', 0)
-        assert scale >= 0
-        # todo scale bounding box for scale
-        assert len(q['bbox']) == 6
-        if True or scale == 0:  # TODO remove this scaling?
-            # left, right, north, south, top, bottom
-            l, r, n, s, t, b = q['bbox']
-        else:
-            scale = 2 ** scale
-            l, r, n, s, t, b = [i * scale for i in q['bbox']]
-        mq['bbox.left'] = {'$lte': r}
-        mq['bbox.right'] = {'$gte': l}
-        mq['bbox.north'] = {'$gte': s}
-        mq['bbox.south'] = {'$lte': n}
-        mq['bbox.top'] = {'$gte': b}
-        mq['bbox.bottom'] = {'$lte': t}
-        print("querying db with {}".format(mq))
-        tiles = [tile for tile in self.coll.find(mq)]
-        print("found {} tiles".format(len(tiles)))
-        for t in tiles:
-            del t['_id']
-        return tiles
-
     def get_max(self, k):
-        cursor = self.coll.find({}, {k: True}).sort(k, -1).limit(1)
-        d = cursor.next()
-        return reduce(lambda x, y: x[y], k.split('.'), d)
+        raise NotImplementedError("get_max not implemented in DataStore")
 
     def get_min(self, k):
-        cursor = self.coll.find({}, {k: True}).sort(k, 1).limit(1)
-        d = cursor.next()
-        return reduce(lambda x, y: x[y], k.split('.'), d)
+        raise NotImplementedError("get_min not implemented in DataStore")
 
 
-def fill_database(c, n=1000, drop=False):
-    if drop:
-        c.drop()
-    for i in xrange(n):
-        x, y = random.random(), random.random()
-        w, h = random.random(), random.random()
-        level = str(random.randint(0, 4))
-        d = {
-            'url': '/images/{}'.format(i),
-            'maskUrl': '/masks/{}'.format(i),
-            'transforms': [],
-            'filters': [],
-            'bbox': dict(left=x, right=x+w, top=y, bottom=y+h),
-            'level': level,
-            'parent': ''
-        }
-        c.insert(d)
-    c.reindex()
+def find(tiles, indexes, bbox):
+    # nieve find TODO time this, speed it up
+    m = indexes['bbox.left'] <= bbox['right']
+    m = numpy.logical_and(m, indexes['bbox.right'] >= bbox['left'])
+    if not numpy.any(m):  # shortcut exit for no finds
+        return []
+    m = numpy.logical_and(m, indexes['bbox.north'] >= bbox['south'])
+    m = numpy.logical_and(m, indexes['bbox.south'] <= bbox['north'])
+    if not numpy.any(m):
+        return []
+    m = numpy.logical_and(m, indexes['bbox.top'] >= bbox['bottom'])
+    m = numpy.logical_and(m, indexes['bbox.bottom'] <= bbox['top'])
+    if not numpy.any(m):
+        return []
+    return tiles[numpy.where(m)[0]]
 
 
-def time_queries(ns=None):
-    if ns is None:
-        ns = [100, 900, 9000, 900000, 9000000]
-    q = MongoTileStore()
-    q.coll.drop()
-    rs = []
-    for n in ns:
-        fill_database(q.coll, n)
-        t0 = time.time()
-        q.parse_query('b[0,0,0,0,0]')
-        t1 = time.time()
-        rs.append(t1 - t0)
-    return rs
+class JSONTileStore(TileStore):
+    def __init__(self, fn):
+        TileStore.__init__(self)
+        # load tiles from json
+        with open(fn, 'r') as f:
+            self.tiles = json.load(f)
+        # index by several keys
+        self.indexes = {}
+        for k in ['bbox.left', 'bbox.right', 'bbox.north',
+                  'bbox.south', 'bbox.top', 'bbox.bottom']:
+            self.indexes[k] = numpy.array([t[k] for t in self.tiles])
+
+    def tile_query(self, q):
+        return find(self.tiles, self.indexes, q['bbox'])
+
+    def get_max(self, k):
+        return self.indexes[k].max()
+
+    def get_min(self, k):
+        return self.indexes[k].min()
