@@ -27,13 +27,16 @@ try:
     from . import profiler
 except:
     import profiler
+try:
+    import mongotilestore
+except:
+    pass
 
 
 app = flask.Flask('tile server')
 #tilestore = tilestore.MongoTileStore(db='test', coll='tiles')
-#tilestore = tilestore.MongoTileStore(db='140307_rep_grid', coll='tiles')
-import mongotilestore
-tilestore = mongotilestore.MongoTileStore(db='mbsem', coll='tiles')
+tilestore = mongotilestore.MongoTileStore(db='140307_rep_grid', coll='tiles')
+#tilestore = mongotilestore.MongoTileStore(db='mbsem', coll='tiles')
 #tilestore = tilestore.JSONTileStore('mbsem.json')
 bounds = {}
 bounds['x0'] = tilestore.get_min('bbox.left')
