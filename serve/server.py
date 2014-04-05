@@ -40,6 +40,7 @@ bounds['x0'] = tilestore.get_min('bbox.left')
 bounds['y0'] = tilestore.get_min('bbox.south')
 xs = tilestore.get_max('bbox.right') - bounds['x0']
 ys = tilestore.get_max('bbox.north') - bounds['y0']
+print xs, ys, bounds
 bounds['xs'] = max(xs, ys)
 bounds['ys'] = bounds['xs']
 #bounds['xs'] = tilestore.get_max('bbox.right') - bounds['x0']
@@ -86,7 +87,7 @@ def query_to_bounding_box(q):
     d = (2. ** q['z'])
     return [
         x0 + xs * (q['x'] / d), x0 + xs * ((q['x'] + 1) / d),
-        y0 + ys * ((q['y'] + 1) / d), y0 + xs * (q['y'] / d),
+        y0 + ys * ((q['y'] + 1) / d), y0 + ys * (q['y'] / d),
         0, 0]
 
 

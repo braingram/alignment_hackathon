@@ -138,9 +138,9 @@ def render_image(q, image, dims, dst=None):
     # combine affines im_to_w -> im_to_q_w -> q_to_t
     im_to_t = combine_affines(w_to_t, im_to_w)
     #print("im_to_t {}".format(im_to_t))
-    md = 1. / max(im_to_t[0, 0], im_to_t[1, 1])
+    md = 1. / max(abs(im_to_t[0, 0]), abs(im_to_t[1, 1]))
     if md > 1:
-        s = int(md)  # TODO max prescale?
+        s = min(int(md), im.shape[0] / 4, im.shape[1] / 4)
         im_to_t[0, 0] = im_to_t[0, 0] * s
         im_to_t[1, 1] = im_to_t[1, 1] * s
         im = im[::s, ::s]

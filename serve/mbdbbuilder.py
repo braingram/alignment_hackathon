@@ -27,6 +27,8 @@ except ImportError:
 ddir = '~/Desktop/multisem_140314/*/[!t]*.bmp'
 cname = 'mbsem'
 dregex = '/(?P<tile>[0-9]*)_(?P<sub>[0-9]*)'
+dupx = 0
+dupy = 0
 
 md = {}
 
@@ -54,6 +56,8 @@ def build_tile_spec(fn, regex):
         'bottom': 0,
     }
     s['filters'] = []  # TODO build lens correction filter, etc
+    s['x'] = x
+    s['y'] = y
     #s['x'] = int(s['x'])
     #s['y'] = int(s['y'])
     s['transforms'] = [
@@ -89,6 +93,31 @@ if __name__ == '__main__':
         coll = pymongo.Connection('localhost')[cname]['tiles']
         coll.drop()
         build_database(coll, ddir, dregex)
+        # duplicate by x 3 times then y 3 times
+        for xi in xrange(dupx):
+            lx = coll.find({}).sort(
+                'bbox.left', 1).limit(1).next()['bbox']['left']
+            rx = coll.find({}).sort(
+                'bbox.right', -1).limit(1).next()['bbox']['right']
+            dx = abs(rx - lx)
+            for d in coll.find({}):
+                nd = dict([(k, d[k]) for k in d if k != '_id'])
+                nd['bbox']['left'] += dx
+                nd['bbox']['right'] += dx
+                nd['x'] += dx
+                coll.insert(nd)
+        for yi in xrange(dupy):
+            sy = coll.find({}).sort(
+                'bbox.south', 1).limit(1).next()['bbox']['south']
+            ny = coll.find({}).sort(
+                'bbox.north', -1).limit(1).next()['bbox']['north']
+            dy = abs(ny - sy)
+            for d in coll.find({}):
+                nd = dict([(k, d[k]) for k in d if k != '_id'])
+                nd['bbox']['north'] += dy
+                nd['bbox']['south'] += dy
+                nd['y'] += dy
+                coll.insert(nd)
         map(coll.create_index, (
             'bbox.left', 'bbox.right',
             'bbox.north', 'bbox.south',
