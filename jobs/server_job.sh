@@ -1,5 +1,9 @@
 #!/bin/bash
 
+if [ -z "$TILESERVER_DIR" ]; then
+    echo "env variable TILESERVER_DIR must be set"
+fi
+
 if [ $# -lt 1 ]; then
     echo "Must supply serving port"
     exit 1
@@ -7,18 +11,16 @@ fi
 PORT="$1"
 
 # setup path, etc
-cd /groups/visitors/home/hackathon/graham
-. sourceme
-cd alignment_hackathon/serve
+#. sourceme
 
 # run server
 echo "running server"
-touch /groups/visitors/home/hackathon/graham/servers/`hostname`:$PORT
-python run.py 0.0.0.0 $PORT
+touch $TILESERVER_DIR/`hostname`:$PORT
+python -m tileserver 0.0.0.0 $PORT
 
 # cleanup
 echo "cleaning up"
-rm /groups/visitors/home/hackathon/graham/servers/`hostname`:$PORT
+rm $TILESERVER_DIR/`hostname`:$PORT
 
 # kill port forward
 echo "finished"

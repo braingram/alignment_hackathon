@@ -6,8 +6,10 @@ if [ $# -lt 1 ]; then
 fi
 NJOBS="$1"
 
-JOB="/groups/visitors/home/hackathon/graham/server_job.sh"
-LOGDIR="/groups/visitors/home/hackathon/graham/logs"
+# location of server_job.sh
+JOB="`cwd`/server_job.sh"
+LOGDIR="`cwd`/logs"
+mkdir -p $LOGDIR
 OPTS="-j y -l short=true"
 
 # submit N rendering nodes with ports 5000 + i

@@ -104,8 +104,8 @@ def get_tile(x, y, z):
 def default():
     #print flask.request.host
     # get rendering servers
-    # TODO make this non-hacky
-    sdir = os.path.expanduser(os.path.join('~', 'graham', 'servers'))
+    if 'TILESERVER_DIR' in os.environ:
+        sdir = os.path.expanduser(os.environ['TILESERVER_DIR'])
     if os.path.exists(sdir):
         servers = os.listdir(sdir)
     else:
