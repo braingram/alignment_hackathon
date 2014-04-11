@@ -1,5 +1,9 @@
 #!/bin/bash
 
+if [ -z "$TILESERVER_DIR" ]; then
+    echo "env variable TILESERVER_DIR must be set"
+fi
+
 if [ $# -lt 1 ]; then
     echo "Must supply number of jobs"
     exit 1
@@ -20,3 +24,6 @@ for I in `seq 1 $NJOBS`; do
     # submit job
     qsub -N $NAME -o $LOGDIR/$NAME $OPTS -cwd -V -S /bin/bash $JOB $PORT
 done
+
+echo "When jobs are running navigate to one of the following hosts"
+ls $TILESERVER_DIR

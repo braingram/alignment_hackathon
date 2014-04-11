@@ -1,0 +1,20 @@
+Quick (and dirty) tile viewer
+
+python -m tileviewer <tiles.json>
+
+open browser and go to http://127.0.0.1:5000
+
+In addition to json files, data can be read from a mongodb
+
+python -m tileviewer mongo:<host>:<database>:<collection>
+
+and the serving host (default: 0.0.0.0) and port (default: 5000) can be set:
+
+python -m tileviewer <tiles.json> <host> <port>
+
+See tileviewer/db/dbbuilder.py for an example script to build a 
+tilestore database.
+
+See jobs for example scripts to run sever renderers on a cluster. Be sure to 
+set the TILESERVER_DIR environment variable so that all renderers can 
+locate other renderers.
