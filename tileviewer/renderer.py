@@ -91,11 +91,7 @@ def multiply_affines(a, b):
     am[:2] = a
     bm = numpy.matrix(numpy.identity(3, dtype='f4'))
     bm[:2] = b
-    r = am * bm  # a * b
-    # TODO do I need to normalize this?
-    #print("a {}".format(am))
-    #print("b {}".format(bm))
-    #print("a * b = {}".format(r))
+    r = am * bm
     return numpy.array(r[:2], dtype='f4')
 
 

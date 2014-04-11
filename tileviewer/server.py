@@ -16,6 +16,7 @@ import Image
 
 from . import renderer
 from . import profiler
+from . import db
 
 #tilestore = tilestore.MongoTileStore(db='test', coll='tiles')
 #tilestore = mongotilestore.MongoTileStore(db='140307_rep_grid', coll='tiles')
@@ -123,14 +124,12 @@ def stats():
 
 
 def run(tilestore, *args, **kwargs):
+    if isinstance(tilestore, (str, unicode)):
+        tilestore = db.get_store(tilestore)
     set_tilestore(tilestore)
     # get static and template locations
     d = os.path.dirname(os.path.abspath(__file__))
-    td = os.path.join(d, 'templates')
-    sd = os.path.join(d, 'static')
-    print td, sd
-    kwargs['static_files'] = kwargs.get(
-        'static_files', os.path.join(d, 'static'))
+    app.static_folder = os.path.join(d, 'static')
     app.template_folder = os.path.join(d, 'templates')
     app.run(*args, **kwargs)
 

@@ -3,11 +3,12 @@
 from .tilestore import JSONTileStore
 try:
     import pymongo
+    has_mongo = True
 except ImportError:
     has_mongo = False
 
 if has_mongo:
-    from .mongotilestore import MongoTilestore
+    from .mongotilestore import MongoTileStore
 
 
 def get_store(loc):
