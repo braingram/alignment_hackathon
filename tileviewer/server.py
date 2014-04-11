@@ -106,8 +106,10 @@ def default():
     # get rendering servers
     if 'TILESERVER_DIR' in os.environ:
         sdir = os.path.expanduser(os.environ['TILESERVER_DIR'])
-    if os.path.exists(sdir):
-        servers = os.listdir(sdir)
+        if os.path.exists(sdir):
+            servers = os.listdir(sdir)
+        else:
+            servers = []
     else:
         servers = []
     servers.append(flask.request.host)

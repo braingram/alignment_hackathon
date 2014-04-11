@@ -12,11 +12,11 @@ def run(args=None):
         raise ValueError("tilestore location must be supplied")
     ts = args[0]
     if len(args) > 1:
-        host = ts[1]
+        host = args[1]
     else:
         host = '0.0.0.0'
     if len(args) > 2:
-        port = int(ts[2])
+        port = int(args[2])
     else:
         port = 5000
     if len(args) > 3:
