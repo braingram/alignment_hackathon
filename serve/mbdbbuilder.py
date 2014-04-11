@@ -24,7 +24,8 @@ except ImportError:
 #cname = 'test'
 #dregex = '(?P<x>[0-9]*)_(?P<y>[0-9]*)'
 #hfov = 0.5
-ddir = '~/Desktop/multisem_140314/*/[!t]*.bmp'
+#ddir = '~/Desktop/multisem_140314/*/[!t]*.bmp'
+ddir = '/nobackup/hackathon/data/lichtmanlab/MultiSEM_140314/*/[!t]*.bmp'
 cname = 'mbsem'
 dregex = '/(?P<tile>[0-9]*)_(?P<sub>[0-9]*)'
 dupx = 0
@@ -34,7 +35,9 @@ md = {}
 
 
 def build_tile_spec(fn, regex):
+    print("Building tile spec for {}".format(fn))
     s = re.search(regex, fn).groupdict()
+    print("\tparsed filename {}".format(s))
     # load meta data
     dfn = os.path.dirname(fn)
     mfn = os.path.join(dfn, 'pixelCoordinates.txt')
@@ -83,6 +86,7 @@ def build_database(coll, glob_string, regex):
 
 def build_json(output_fn, glob_string, regex):
     fns = glob.glob(os.path.expanduser(glob_string))
+    print("Found {} files".format(len(fns)))
     docs = [build_tile_spec(fn, regex) for fn in fns]
     with open(output_fn, 'w') as f:
         json.dump(docs, f)

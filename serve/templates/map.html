@@ -16,11 +16,13 @@
         var po = org.polymaps;
         var map = po.map()
             .container(document.getElementById("map").appendChild(po.svg("svg")))
-            .zoomRange([1, 8])
-            .zoom(1)
+            .zoomRange([5, 32])
+            .zoom(8)
             .add(po.interact());
         //
-            map.add(po.image().url(po.url("http://{S}/{Z}/{X}/{Y}").hosts({{servers|tojson|safe}})));
+            map.add(po.image()
+                .url(po.url("http://{S}/{Z}/{X}/{Y}").hosts({{servers|tojson|safe}}))
+                .zoom(function(z) {return Math.max(8, z);}));
     </script>
 </body>
 </html>

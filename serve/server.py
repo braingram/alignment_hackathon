@@ -14,10 +14,10 @@ import os
 import flask
 import Image
 
-#try:  # HACK
-#    from . import tilestore
-#except:
-#    import tilestore
+try:  # HACK
+    from . import tilestore
+except:
+    import tilestore
 
 try:  # HACK
     from . import renderer
@@ -35,9 +35,9 @@ except:
 
 app = flask.Flask('tile server')
 #tilestore = tilestore.MongoTileStore(db='test', coll='tiles')
-tilestore = mongotilestore.MongoTileStore(db='140307_rep_grid', coll='tiles')
+#tilestore = mongotilestore.MongoTileStore(db='140307_rep_grid', coll='tiles')
 #tilestore = mongotilestore.MongoTileStore(db='mbsem', coll='tiles')
-#tilestore = tilestore.JSONTileStore('mbsem.json')
+tilestore = tilestore.JSONTileStore('mb_140314.json')
 bounds = {}
 bounds['x0'] = tilestore.get_min('bbox.left')
 bounds['y0'] = tilestore.get_min('bbox.south')
