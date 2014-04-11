@@ -31,10 +31,7 @@ import json
 
 import numpy
 
-try:
-    from . import profiler
-except:
-    import profiler
+from .. import profiler
 
 
 class TileStore(object):

@@ -29,10 +29,7 @@ docs:
 
 import pymongo
 
-try:
-    from . import tilestore
-except:
-    import tilestore
+from . import tilestore
 
 
 class MongoTileStore(tilestore.TileStore):

@@ -13,10 +13,7 @@ except ImportError:
 import numpy
 #import pylab
 
-try:
-    from . import profiler
-except:
-    import profiler
+from . import profiler
 
 
 imgs = {}

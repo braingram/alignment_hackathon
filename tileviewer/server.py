@@ -14,40 +14,31 @@ import os
 import flask
 import Image
 
-try:  # HACK
-    from . import tilestore
-except:
-    import tilestore
+from . import renderer
+from . import profiler
 
-try:  # HACK
-    from . import renderer
-except:
-    import renderer
-try:
-    from . import profiler
-except:
-    import profiler
-try:
-    import mongotilestore
-except:
-    pass
-
-
-app = flask.Flask('tile server')
 #tilestore = tilestore.MongoTileStore(db='test', coll='tiles')
 #tilestore = mongotilestore.MongoTileStore(db='140307_rep_grid', coll='tiles')
 #tilestore = mongotilestore.MongoTileStore(db='mbsem', coll='tiles')
-tilestore = tilestore.JSONTileStore('mb_140314.json')
-bounds = {}
-bounds['x0'] = tilestore.get_min('bbox.left')
-bounds['y0'] = tilestore.get_min('bbox.south')
-xs = tilestore.get_max('bbox.right') - bounds['x0']
-ys = tilestore.get_max('bbox.north') - bounds['y0']
-print xs, ys, bounds
-bounds['xs'] = max(xs, ys)
-bounds['ys'] = bounds['xs']
-#bounds['xs'] = tilestore.get_max('bbox.right') - bounds['x0']
-#bounds['ys'] = tilestore.get_max('bbox.north') - bounds['y0']
+#tilestore = tilestore.JSONTileStore('mb_140314.json')
+
+app = flask.Flask('tile server')
+app.tilestore = None
+app.bounds = {}
+
+
+def compute_bounds():
+    app.bounds['x0'] = app.tilestore.get_min('bbox.left')
+    app.bounds['y0'] = app.tilestore.get_min('bbox.south')
+    xs = app.tilestore.get_max('bbox.right') - app.bounds['x0']
+    ys = app.tilestore.get_max('bbox.north') - app.bounds['y0']
+    app.bounds['xs'] = max(xs, ys)
+    app.bounds['ys'] = app.bounds['xs']
+
+
+def set_tilestore(ts):
+    app.tilestore = ts
+    compute_bounds()
 
 
 @profiler.timeit
@@ -61,7 +52,7 @@ def array_to_png(a):
 
 def test_render_tile(q, s=None):
     if s is None:
-        s = tilestore
+        s = app.tilestore
     q['bbox'] = query_to_bounding_box(q)
     #print("query {}".format(q))
     tiles = s.query(dict(tile=q))
@@ -71,22 +62,10 @@ def test_render_tile(q, s=None):
 
 @profiler.timeit
 def query_to_bounding_box(q):
-    ## for rep grid
-    #x0 = q.get('x0', 487547)  # min x (nm) of all tiles
-    #y0 = q.get('y0', 1987541)  # min y (nm) of all tiles
-    #xs = q.get('xs', 26566.)  # x width (nm) of all tiles
-    #ys = q.get('ys', 26587.)  # y height (nm) of all tiles
-    ## for example files
-    x0 = q.get('x0', bounds['x0'])  # min x (nm) of all tiles
-    y0 = q.get('y0', bounds['y0'])  # min y (nm) of all tiles
-    xs = q.get('xs', bounds['xs'])  # x width (nm) of all tiles
-    ys = q.get('ys', bounds['ys'])  # y height (nm) of all tiles
-    # 0 -> 1
-    # 1 -> 2
-    # 2 -> 4
-    # 3 -> 8
-    # 4 -> 16
-    # 5 -> 32
+    x0 = q.get('x0', app.bounds['x0'])
+    y0 = q.get('y0', app.bounds['y0'])
+    xs = q.get('xs', app.bounds['xs'])
+    ys = q.get('ys', app.bounds['ys'])
     d = (2. ** q['z'])
     return [
         x0 + xs * (q['x'] / d), x0 + xs * ((q['x'] + 1) / d),
@@ -110,7 +89,7 @@ def get_tile(x, y, z):
     q['bbox'] = query_to_bounding_box(q)
 
     #print("get_tile {}".format(q))
-    tiles = tilestore.query(dict(tile=q))
+    tiles = app.tilestore.query(dict(tile=q))
     # render images to a 256 x 256 tile
     rendered_tile = renderer.render_tile(q, tiles, (256, 256))
     if rendered_tile is None:
@@ -122,7 +101,7 @@ def get_tile(x, y, z):
 
 @app.route('/')
 def default():
-    print flask.request.host
+    #print flask.request.host
     # get rendering servers
     # TODO make this non-hacky
     sdir = os.path.expanduser(os.path.join('~', 'graham', 'servers'))
@@ -143,7 +122,16 @@ def stats():
         times=times)
 
 
-def run(*args, **kwargs):
+def run(tilestore, *args, **kwargs):
+    set_tilestore(tilestore)
+    # get static and template locations
+    d = os.path.dirname(os.path.abspath(__file__))
+    td = os.path.join(d, 'templates')
+    sd = os.path.join(d, 'static')
+    print td, sd
+    kwargs['static_files'] = kwargs.get(
+        'static_files', os.path.join(d, 'static'))
+    app.template_folder = os.path.join(d, 'templates')
     app.run(*args, **kwargs)
 
 
