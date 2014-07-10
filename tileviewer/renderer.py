@@ -61,6 +61,7 @@ def open_tif(fn):
     f = libtiff.TIFFfile(fn)
     im = f.get_tiff_array()[0]
     f.close()
+    im = im - (numpy.mean(im) - 128)
     imgs[fn] = im
     return im
 

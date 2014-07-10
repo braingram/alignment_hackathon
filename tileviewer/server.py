@@ -100,6 +100,25 @@ def get_tile(x, y, z):
     return flask.send_file(array_to_png(rendered_tile[::-1, :]), 'image/png')
 
 
+@app.route('/export/')
+def export_image():
+    q = dict(x=0, y=0, z=0)
+    for k in flask.request.args:
+        q[k] = flask.request.args[k]
+
+    q['bbox'] = query_to_bounding_box(q)
+    print q
+
+    tiles = app.tilestore.query(dict(tile=q))
+    hres = 5000
+    bb = q['bbox']
+    aspect_ratio = (bb[1] - bb[0]) / (bb[2] - float(bb[3]))
+    vres = hres / aspect_ratio
+    rendered_tile = renderer.render_tile(q, tiles, (int(hres), int(vres)))
+
+    return flask.send_file(array_to_png(rendered_tile[::-1, :]), 'image/png')
+
+
 @app.route('/')
 def default():
     #print flask.request.host
