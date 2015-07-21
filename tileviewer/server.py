@@ -110,10 +110,10 @@ def export_image():
     print q
 
     tiles = app.tilestore.query(dict(tile=q))
-    hres = 5000
+    hres = int(q.get('hres', 200))
     bb = q['bbox']
     aspect_ratio = (bb[1] - bb[0]) / (bb[2] - float(bb[3]))
-    vres = hres / aspect_ratio
+    vres = int(q.get('vres', hres / aspect_ratio))
     rendered_tile = renderer.render_tile(q, tiles, (int(hres), int(vres)))
 
     return flask.send_file(array_to_png(rendered_tile[::-1, :]), 'image/png')

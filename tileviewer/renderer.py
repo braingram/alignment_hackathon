@@ -54,6 +54,9 @@ def open_bmp(fn):
         offset=data_offset, shape=(height, width))[::direction, :]
 
 
+gray = numpy.zeros((256, 256), dtype='f8') + 128
+
+
 def open_tif(fn):
     if fn in imgs:
         return imgs[fn]
@@ -61,7 +64,10 @@ def open_tif(fn):
     f = libtiff.TIFFfile(fn)
     im = f.get_tiff_array()[0]
     f.close()
-    im = im - (numpy.mean(im) - 128)
+    #if numpy.std(im) < 9.:
+    #    imgs[fn] = gray
+    #    return gray
+    #im = im - (numpy.mean(im) - 128)
     imgs[fn] = im
     return im
 
@@ -73,6 +79,19 @@ def open_image(fn):
     if not has_libtiff:
         raise Exception("No libtiff found, only bmp supported")
     return open_tif(fn)
+
+
+def open_mask(fn):
+    return open_tif(fn)
+
+
+def apply_mask(im, mask):
+    if im.ndim == 2:   # greyscale
+        return cv2.merge((im, im, im, mask))
+    elif im.ndim == 3:
+        if im.shape[2] == 1:
+            return cv2.merge((im[:, :, 0], im[:, :, 0], im[:, :, 0], mask))
+        return cv2.merge((im[:, :, 0], im[:, :, 1], im[:, :, 2], mask))
 
 
 def bbox_to_xyz(bb):
@@ -118,6 +137,9 @@ def render_image(q, image, dims, dst=None):
     # generate affine (2) to lay image (image) onto (world)
     #im = open_tif(image['url']['0'])[::4, ::4]
     im = open_image(image['url']['0'])
+    if 'mask' in image:
+        mask = open_mask(image['mask'])
+        im = apply_mask(im, mask)
     imshape = im.shape
     ipts = [[0, 0], [imshape[1], 0], [imshape[1], imshape[0]]]
     # generate affine (1) to lay image bounding box (world) onto query
