@@ -14,11 +14,17 @@
     </div>
     <script type="text/javascript">
         var po = org.polymaps;
+        var svg = po.svg("svg");
+        svg.setAttribute("width", 800);
+        svg.setAttribute("height", 600);
+        document.getElementById("map").appendChild(svg);
         var map = po.map()
-            .container(document.getElementById("map").appendChild(po.svg("svg")))
-            //.zoomRange([5, 32])
-            //.zoom(8)
-            .zoom(1)
+            //.container(document.getElementById("map").appendChild(po.svg("svg")))
+            .container(svg)
+            .zoomRange([1, 32])
+            .zoom(10)
+            .size({'x': 800, 'y': 600}) 
+            //.zoom(1)
             .add(po.interact());
         //
             map.add(po.image()
