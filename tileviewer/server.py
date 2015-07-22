@@ -13,6 +13,7 @@ import os
 
 import flask
 import Image
+import numpy
 
 from . import renderer
 from . import profiler
@@ -44,6 +45,7 @@ def set_tilestore(ts):
 
 @profiler.timeit
 def array_to_png(a):
+    a = numpy.ma.filled(a, 128)
     im = Image.fromarray(a.astype('u1'))
     io = StringIO()
     im.save(io, format='png')
@@ -55,7 +57,7 @@ def test_render_tile(q, s=None):
     if s is None:
         s = app.tilestore
     q['bbox'] = query_to_bounding_box(q)
-    #print("query {}".format(q))
+    # print("query {}".format(q))
     tiles = s.query(dict(tile=q))
     # render images to a 256 x 256 tile
     return renderer.render_tile(q, tiles, (256, 256))[::-1, :]

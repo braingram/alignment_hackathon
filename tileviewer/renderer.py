@@ -54,7 +54,7 @@ def open_bmp(fn):
         offset=data_offset, shape=(height, width))[::direction, :]
 
 
-gray = numpy.zeros((256, 256), dtype='f8') + 128
+gray = numpy.zeros((256, 256), dtype='u1') + 128
 
 
 def open_tif(fn):
@@ -165,10 +165,27 @@ def render_image(q, image, dims, dst=None):
     # convert
     #if dst is None:
     #    return cv2.warpAffine(im.astype('f8'), im_to_t, dims)
-    if dst is None:
-        return cv2.warpAffine(im, im_to_t, dims)
-    return cv2.warpAffine(
-        im, im_to_t, dims, dst=dst, borderMode=cv2.BORDER_TRANSPARENT)
+    if len(im.shape) > 2:  # has alpha
+        t = cv2.warpAffine(
+            im, im_to_t, dims[:2], borderMode=cv2.BORDER_TRANSPARENT)
+        t = numpy.ma.masked_array(t[:, :, 0], (255 - t[:, :, 3]).astype(bool))
+        if dst is None:
+            return t
+        m = numpy.logical_and(t.mask, dst.mask)
+        dst = numpy.where(t.mask, dst, t)
+        return numpy.ma.masked_array(dst, m)
+        # nd = numpy.ma.masked_array(nd, numpy.logical_or(t.mask, dst.mask))
+        # nd = numpy.ma.masked_array(nd, t.mask)
+        # return nd
+        # dst = Image.alpha_composite(
+        #    Image.fromarray(dst), Image.fromarray(t))
+        # return numpy.array(dst)
+    else:
+        if dst is None:
+            return cv2.warpAffine(
+                im, im_to_t, dims, borderMode=cv2.BORDER_TRANSPARENT)
+        return cv2.warpAffine(
+            im, im_to_t, dims, dst=dst, borderMode=cv2.BORDER_TRANSPARENT)
 
 
 @profiler.timeit
@@ -182,6 +199,8 @@ def render_tile(q, images, dims):
     dst = None
     for (d, im) in dists_images:
         dst = render_image(q, im, dims, dst)
+    if dst is None:
+        return gray
     return dst
 
 if __name__ == '__main__':

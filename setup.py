@@ -7,6 +7,7 @@ import ConfigParser
 import logging
 import os
 import re
+import sys
 
 # ----- overrides -----
 
@@ -42,6 +43,44 @@ debug = True
 use_numpy = False
 
 # -------------------------
+update_url = "https://raw.githubusercontent.com/braingram/simple_setup/master/setup.py"
+
+# this next line is important for the 'fetch' option (see below)
+# MARK
+if (len(sys.argv) > 1) and sys.argv[1] == 'fetch':
+    _overrides = {}
+    _locals = locals()
+    for _k in _locals.keys():
+        if (_k[0] != '_') and not isinstance(_locals[_k], type(sys)):
+            _overrides[_k] = _locals[_k]
+    if len(sys.argv) > 2:
+        target_fn = sys.argv[2]
+    else:
+        target_fn = __file__
+    print("Fetching a new simple_setup.py to {}".format(target_fn))
+    import urllib2
+    new_ss = urllib2.urlopen(update_url)
+    with open(target_fn, 'w') as target:
+        found_mark = False
+        for l in new_ss:
+            if found_mark or len(l.strip()) == 0:
+                target.write(l)
+            else:
+                if l[0] == '#':
+                    if l.strip() == '# MARK':
+                        found_mark = True
+                    target.write(l)
+                    continue
+                lt = l.split('=')
+                key = lt[0].strip()
+                if (len(lt) == 2) and (key in _overrides):
+                    # copy over the overrides
+                    target.write("{} = {!r}\n".format(key, _overrides[key]))
+                else:
+                    target.write(l)
+                    continue
+    print("successfully fetched new setup.py")
+    sys.exit(0)
 
 if debug:
     logging.basicConfig(level=logging.DEBUG)
@@ -55,14 +94,22 @@ except ImportError:
     # distribute_setup.py was not in this directory
     if not (setup_tools_fallback):
         import setuptools
-        if not (hasattr(setuptools, '_distribute') and
-                setuptools._distribute):
+        # check if setuptools is distribute
+        vt = setuptools.__version__.split('.')
+        if len(vt) == 1:
+            vmajor = int(vt[0])
+            vminor = 0
+        elif len(vt) > 1:
+            vmajor = int(vt[0])
+            vminor = int(vt[1])
+        if (hasattr(setuptools, '_distribute') and
+                setuptools._distribute) or (vmajor > 0 or vminor > 6):
+            logging.debug("distribute_setup.py not found, "
+                          "defaulted to system distribute")
+        else:
             raise ImportError(
                 "distribute was not found and fallback "
                 "to setuptools was not allowed")
-        else:
-            logging.debug("distribute_setup.py not found, "
-                          "defaulted to system distribute")
     else:
         logging.debug("distribute_setup.py not found, "
                       "defaulting to system setuptools")
@@ -178,8 +225,7 @@ def detect_version():
     """
     try:
         m = __import__(package_name, fromlist=['__version__'])
-        if hasattr(m, '__version__'):
-            return m.__version__
+        return getattr(m, '__version__', 'dev')
     except ImportError:
         pass
     return 'dev'
@@ -219,6 +265,22 @@ def long_description_from_readme():
     return s
 
 
+def include_requirements_file_in_manifest(fn):
+    mfn = os.path.join(os.path.dirname(__file__), 'MANIFEST.in')
+    if os.path.exists(mfn):
+        included = False
+        with open(mfn, 'r') as f:
+            for l in f:
+                if fn in l:
+                    included = True
+        if not included:
+            with open(mfn, 'a') as f:
+                f.writelines(["include {}".format(fn), ])
+    else:
+        with open(mfn, 'w') as f:
+            f.writelines(["include {}".format(fn), ])
+
+
 # ----------- Override defaults here ----------------
 if packages is None:
     packages = setuptools.find_packages()
@@ -243,6 +305,8 @@ if os.path.exists(requirements_file):
         requirements = parse_requirements(requirements_file)
     if dependency_links is None:
         dependency_links = parse_dependency_links(requirements_file)
+    # include requirements_file in MANIFEST.in
+    include_requirements_file_in_manifest(requirements_file)
 else:
     if requirements is None:
         requirements = []
