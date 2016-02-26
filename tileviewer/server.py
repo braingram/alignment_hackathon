@@ -91,8 +91,8 @@ def get_tile(x, y, z):
 
     q['bbox'] = query_to_bounding_box(q)
 
-    #print("get_tile {}".format(q))
     tiles = app.tilestore.query(dict(tile=q))
+    #print("get_tile {}->{}".format(q, len(tiles)))
     # render images to a 256 x 256 tile
     rendered_tile = renderer.render_tile(q, tiles, (256, 256))
     if rendered_tile is None:

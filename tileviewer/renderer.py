@@ -198,7 +198,7 @@ def render_tile(q, images, dims):
     # sort by distance, render far to close
     dists = [distance(im['bbox'], q['bbox']) for im in images]
     dists_images = sorted(zip(dists, images), reverse=True)
-    dst = None
+    dst = numpy.zeros(dims, dtype='u1')
     for (d, im) in dists_images:
         dst = render_image(q, im, dims, dst)
     if dst is None:
