@@ -81,11 +81,17 @@ def find(tiles, indexes, bbox):
 class JSONTileStore(TileStore):
     def __init__(self, fn):
         TileStore.__init__(self)
-        # load tiles from json
+        self.tiles = []
+        self.indexes = {}
+        if fn is not None:
+            self.load_tiles(fn)
+
+    def load_tiles(self, fn):
         with open(fn, 'r') as f:
             self.tiles = json.load(f)
-        # index by several keys
-        self.indexes = {}
+        self.rebuild_indexes()
+
+    def rebuild_indexes(self):
         for k in ['bbox.left', 'bbox.right', 'bbox.north',
                   'bbox.south', 'bbox.top', 'bbox.bottom']:
             self.indexes[k] = numpy.array(

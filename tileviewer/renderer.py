@@ -161,6 +161,8 @@ def render_image(q, image, dims, dst=None):
         im_to_t[1, 1] = im_to_t[1, 1] * s
         im = im[::s, ::s]
     # convert image
+    if im.dtype == 'uint16':
+        im = (im / 256).astype('u1')
     # calculate original image bbox to world coordinates
     # convert
     #if dst is None:

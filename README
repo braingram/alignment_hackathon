@@ -18,3 +18,5 @@ tilestore database.
 See jobs for example scripts to run sever renderers on a cluster. Be sure to 
 set the TILESERVER_DIR environment variable so that all renderers can 
 locate other renderers.
+
+switch to http://leafletjs.com/

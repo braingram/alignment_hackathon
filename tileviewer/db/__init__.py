@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 
 from .tilestore import JSONTileStore
+from .fftilestore import FFTileStore
+
 try:
     import pymongo
     has_mongo = True
@@ -35,8 +37,9 @@ def get_store(loc):
                 'invalid mongo store location {}, must only have '
                 'mongo:host:database:collection'.format(loc))
         return MongoTileStore(host=host, db=db, coll=coll)
+    # TODO:assume this is a flat file tilestore
     raise ValueError("Unknown store location {}".format(loc))
 
-__all__ = ['get_store', 'JSONTileStore']
+__all__ = ['get_store', 'JSONTileStore', 'FFTileStore']
 if has_mongo:
     __all__.append('MongoTileStore')

@@ -15,20 +15,20 @@
     <script type="text/javascript">
         var po = org.polymaps;
         var svg = po.svg("svg");
-        svg.setAttribute("width", 800);
-        svg.setAttribute("height", 600);
+        svg.setAttribute("width", 1600);
+        svg.setAttribute("height", 1200);
         document.getElementById("map").appendChild(svg);
         var map = po.map()
             //.container(document.getElementById("map").appendChild(po.svg("svg")))
             .container(svg)
             .zoomRange([1, 32])
             .zoom(10)
-            .size({'x': 800, 'y': 600}) 
+            .size({'x': 1600, 'y': 1200}) 
             //.zoom(1)
             .add(po.interact());
         //
             map.add(po.image()
-                .url(po.url("http://{S}/{Z}/{X}/{Y}").hosts({{servers|tojson|safe}}))
+                .url(po.url("http://{S}/{Z}/{X}/{Y}").repeat(false).hosts({{servers|tojson|safe}}))
                 //.zoom(function(z) {return Math.max(8, z);})
                 );
     </script>

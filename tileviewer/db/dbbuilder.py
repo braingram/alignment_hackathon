@@ -12,6 +12,7 @@ import sys
 
 try:
     import pymongo
+    no_pymongo = False
 except ImportError as e:
     no_pymongo = True
 
@@ -26,7 +27,7 @@ if len(sys.argv) > 1 and 'json' not in sys.argv[1]:
     del sys.argv[1]
 #cname = '150715084319'
 #ddir = '/home/graham/Desktop/montages/150707153407/processed/ds8/tiles/*.tif'
-ddir = '/home/graham/montages/{}/processed/ds8/tiles/*.tif'.format(cname)
+ddir = '/home/graham/Desktop/montages/{}/processed/ds8/tiles/*.tif'.format(cname)
 #ddir = 'tests/tiles/*.tif'
 #cname = '140310'
 #cname = '150707153407'
@@ -41,20 +42,28 @@ vfov = 468
 #xdx = 56
 #xdy = -33.6
 
-ydx = 67
-ydy = -112
-xdx = 112
-xdy = 67
+#ydx = 67
+#ydy = -112
+#xdx = 112
+#xdy = 67
+
+ydx = -67
+ydy = 112
+xdx = -112
+xdy = -67
+
+#ydx = 0
+#ydy = 0
+#xdx = 0
+#xdy = 0
 
 mask = 'image_mask.tif'
 
 
-
-
 def build_tile_spec(fn, regex):
     s = re.search(regex, fn).groupdict()
-    x = (-float(s['x']) * hfov) + float(s['x']) * xdx + float(s['y']) * ydx
-    y = (float(s['y']) * vfov) + float(s['x']) * xdy + float(s['y']) * ydy
+    x = (float(s['x']) * hfov) + float(s['x']) * xdx + float(s['y']) * ydx
+    y = -(float(s['y']) * vfov) + float(s['x']) * xdy + float(s['y']) * ydy
     print fn, s, x, y
     #x = float(s['x']) * 486
     #y = -float(s['y']) * 486
